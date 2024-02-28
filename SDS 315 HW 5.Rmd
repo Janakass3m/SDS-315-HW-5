@@ -1,0 +1,143 @@
+---
+title: "SDS 315 HW 5"
+author: "Jana Kassem"
+date: "2024-02-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+EID: jmk4958
+
+Github Link: <https://github.com/Janakass3m/SDS-315-HW-5>
+
+# 1
+
+The null hypothesis is that securities trades from Iron Bank get flagged  by SEC detection system at the same 2.4% baseline rate, over the long run.
+
+The test statistic is the number of flagged trades. Higher numbers of flagged cases imply stronger evidence against the null hypothesis. In our data 70 of the last 2021 trades were flagged.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(kableExtra)
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+sim_flag = do(100000)*nflip(n=2021, prob=0.024)
+
+ggplot(sim_flag) + 
+  geom_histogram(aes(x=nflip), binwidth=1) + labs(title = "Simulation of Flagged Trades")
+
+value1 <- (sum(sim_flag >= 70))/100000
+
+print(paste("The p-value for this simulation is", value1))
+```
+Since the p-value is less than the significance level of 0.05 we can conclude that the null hypothesis is rejected because it is very unlikely for 2.4% of trades to get flagged.
+
+# 2
+The null hypothesis is on average, restaurants in the city are cited for health code violations at the same 3% baseline rate.
+
+The test statistic is the number of health code violations being reported. Higher numbers of violation cases imply stronger evidence against the null hypothesis. In our data 8 of the 50 inspections of Gourmet Bites resulted in a health code violation report.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+sim_food = do(100000)*nflip(n=50, prob=0.03)
+
+ggplot(sim_food) + 
+  geom_histogram(aes(x=nflip), binwidth=1) + labs(title = "Simulation of Violation Codes")
+
+value2 <- (sum(sim_food >= 8))/100000
+
+print(paste("The p-value for this simulation is", value2))
+```
+Since the p-value is less than the significance level of 0.05 we can conclude that the null hypothesis is rejected because it is very unlikely for 3% of restaurants to get health code violations.
+
+# 3
+
+### Part A
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+brown <- readLines( "brown_sentences.txt")
+freq_let <- read.csv("letter_frequencies.csv")
+
+calculate_chi_squared = function(sentence, freq_table) {
+  
+  # Ensure letter frequencies are normalized and sum to 1
+  freq_table$Probability = freq_table$Probability / sum(freq_table$Probability)
+  
+  # Remove non-letters and convert to uppercase
+  clean_sentence = gsub("[^A-Za-z]", "", sentence)
+  clean_sentence = toupper(clean_sentence)
+  
+  # Count the occurrences of each letter in the sentence
+  observed_counts = table(factor(strsplit(clean_sentence, "")[[1]], levels = freq_table$Letter))
+  
+  # Calculate expected counts
+  total_letters = sum(observed_counts)
+  expected_counts = total_letters * freq_table$Probability
+  
+  # Chi-squared statistic
+  chi_squared_stat = sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chi_squared_stat)
+}
+
+chi_squared_stats <- numeric(length(brown))
+
+for (i in seq_along(brown)) {
+  chi_squared_stats[i] <- calculate_chi_squared(brown[i], freq_let)
+}
+
+hist(chi_squared_stats)
+
+```
+
+### Part B
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+one <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[1], freq_let)))/length(chi_squared_stats)), 3)
+
+two <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[2], freq_let)))/length(chi_squared_stats)), 3)
+
+three <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[3], freq_let)))/length(chi_squared_stats)), 3)
+
+four <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[4], freq_let)))/length(chi_squared_stats)), 3)
+
+five <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[5], freq_let)))/length(chi_squared_stats)), 3)
+
+six <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[6], freq_let)))/length(chi_squared_stats)), 3)
+
+seven <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[7], freq_let)))/length(chi_squared_stats)), 3)
+
+eight <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[8], freq_let)))/length(chi_squared_stats)), 3)
+
+nine <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[9], freq_let)))/length(chi_squared_stats)), 3)
+
+ten <- round((sum(1*(chi_squared_stats >= calculate_chi_squared(sentences[10], freq_let)))/length(chi_squared_stats)), 3)
+
+count <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+values <- c(one, two, three, four, five, six, seven, eight, nine , ten)
+
+tibble("Sentence" = count, "P-Value" = values)
+
+
+```
+The sentence that is produced by an LLM is sentence six ("Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.") because it has the lowest p-value.
